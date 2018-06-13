@@ -55,7 +55,7 @@ PHP_INI_END()
    Return a string to confirm that the module is compiled in */
 PHP_FUNCTION(build_trie)
 {
-	zval *input;
+    zval *input;
     zval *val;
     zend_array *words;
     char *token;
