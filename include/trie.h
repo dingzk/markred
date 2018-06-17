@@ -1,6 +1,6 @@
 #ifndef TRIE_H__
 #define TRIE_H__
-#define TRIE_NODE_MAX 257
+#define TRIE_NODE_MAX 256
 #define MAX_TRIE_WORD_LEN 200
 #define MARK_TAG_OPEN "<em class=\"s-color-red\">"
 #define MARK_TAG_OPEN_LEN 24
@@ -14,11 +14,11 @@
 
 typedef struct trie {
     uint8_t key;
-    int is_leaf;
+    uint8_t is_end;
     struct trie *next[TRIE_NODE_MAX];
 } Trie;
 
-Trie *create_trie(uint8_t key, int is_leaf);
+Trie *create_trie(uint8_t key, uint8_t is_end);
 void append_trie(char *str, Trie *root);
 int match(const char *str, char *matched, Trie *root);
 int match_all(const char *str, char *str_marked, Trie *root);

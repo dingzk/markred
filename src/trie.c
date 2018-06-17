@@ -7,43 +7,40 @@
 
 //#define DEBUG
 
-inline Trie *create_trie(uint8_t key, int is_leaf)
+inline Trie *create_trie(uint8_t key, uint8_t is_end)
 {
-    Trie *node = (Trie *)malloc(sizeof(Trie));    
+    Trie *node = (Trie *)malloc(sizeof(Trie));
     if (node == NULL) {
+        printf("malloc error for Trie\n");
         return NULL;
     }
     node->key = key;
-    node->is_leaf = is_leaf;
+    node->is_end = is_end;
     memset(node->next, 0, TRIE_NODE_MAX * sizeof(sizeof(Trie *)));
-    
+
     return node;
 }
 
 void append_trie(char *str, Trie *root)
 {
     Trie *cur = root;
-    int is_leaf = 0;
     char key;
-    int i; 
-    unsigned int offset;
+    uint8_t offset;
     size_t len = strlen(str);
-    for (i = 0; i <= len; i++) {
-        if (i == len) {
-            is_leaf = 1;
-            key = '$';
-            offset = TRIE_NODE_MAX - 1;
-        } else {
-            key = str[i];
-            if (isalpha(key)) {
-                key = tolower(key);
-            }
-            offset = (uint8_t)key;
-        }
-        if (cur->next[offset] == 0) {
-            cur->next[offset] = create_trie((uint8_t)key, is_leaf); 
+    if (cur == NULL) {
+        return ;
+    }
+    for (int i = 0; i < len; i++) {
+        key = *(str + i);
+        key = isalpha(key) ? tolower(key) : key; // convert alpha to lower
+        offset = (uint8_t)key;
+        if (cur->next[offset] == NULL) {
+            cur->next[offset] = create_trie(key, 0); 
         }
         cur = cur->next[offset];
+        if (i == len -1) {
+            cur->is_end = 1;
+        }
     }
 }
 
@@ -51,26 +48,21 @@ int match(const char *str, char *matched, Trie *root)
 {
     Trie *cur = root;
     size_t len = strlen(str);
-    int i; 
-    unsigned int offset = 0;
+    uint8_t offset = 0;
     char key;
-    for (i = 0; i < len; i++) {
+    for (int i = 0; i < len; i++) {
         key = *(str + i);
-        if (isalpha(key) && isupper(key)) {
-            key = tolower(key);
-        }
-        offset = (uint8_t) key;
+        offset = isalpha(key) && isupper(key) ? tolower(key) : key;
         if (cur->next[offset] == NULL) {
-            return 0;
+            break;
         }
-        matched[i] = *(str + i);
         cur = cur->next[offset];
-        if (cur->next[TRIE_NODE_MAX - 1] != NULL) {
-            return 1;
+        if (cur->is_end) {
+            strncpy(matched, str, i + 1); // get the largest matched
         }
     }
 
-    return -1;
+    return strlen(matched) > 0 ? 1 : 0;
 }
 
 int match_all(const char *str, char *str_marked, Trie *root)
@@ -104,13 +96,11 @@ void free_trie(Trie *cur)
     if (cur == NULL) {
         return;    
     }
-    //printf("%c\n", cur->key);
-    if (!cur->is_leaf) {
-        Trie **next = cur->next;
-        int i;
-        for (i = 0; i < TRIE_NODE_MAX; i++) {
-            free_trie(*next++);
-        }
+     //printf("%d\n", cur->is_end);
+    //printf("%d\n", cur->is_end);
+    Trie **next = cur->next;
+    for (int i = 0; i < TRIE_NODE_MAX; i++) {
+        free_trie(*next++);
     }
     free(cur);
 }
