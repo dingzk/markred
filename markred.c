@@ -101,7 +101,10 @@ PHP_FUNCTION(markred)
         RETURN_FALSE
     }
     char marked[10240] = {0};
-    match_all(target, marked, MARKRED_G(Troot));
+    //match_all(target, marked, MARKRED_G(Troot));
+
+    Token *t = token_get_all(target);
+    token_mark_all(t, marked, MARKRED_G(Troot));
 
     RETURN_STRING(marked);
 }
