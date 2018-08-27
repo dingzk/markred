@@ -100,13 +100,20 @@ PHP_FUNCTION(markred)
         printf("please call build_trie first\n");
         RETURN_FALSE
     }
-    char marked[10240] = {0};
-    //match_all(target, marked, MARKRED_G(Troot));
-
+    size_t str_len = ZSTR_LEN(str);
+    if (str_len >= TEXT_MAX_LEN) {
+      RETURN_STRING(target);
+    }
+    char marked[TEXT_MAX_LEN] = {0};
     Token *t = token_get_all(target);
-    token_mark_all(t, marked, MARKRED_G(Troot));
+    int ret = token_mark_all(t, marked, TEXT_MAX_LEN, MARKRED_G(Troot));
+    token_free_all(t);
+    if (ret == 0) {
+      RETURN_STRING(marked);
+    } else {
+      RETURN_STRING(target);
+    }
 
-    RETURN_STRING(marked);
 }
 
 /* }}} */

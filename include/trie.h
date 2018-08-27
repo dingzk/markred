@@ -10,6 +10,12 @@
 #define COPY_AND_EXPAND(dst, src, len) do { \
     strncpy(dst, src, len);\
     dst += len;\
+    *dst = '\0';\
+} while(0);
+
+#define STR_COPY(dst, src, len) do { \
+    strncpy(dst, src, len);\
+    *(dst + len) = '\0';\
 } while(0);
 
 typedef struct trie {
@@ -20,8 +26,8 @@ typedef struct trie {
 
 Trie *create_trie(uint8_t key, uint8_t is_end);
 void append_trie(char *str, Trie *root);
-int match(const char *str, char *matched, Trie *root);
-int match_all(const char *str, char *str_marked, Trie *root);
+static int match(const char *str, char *matched, Trie *root);
+int match_all(const char *str, char *str_marked, size_t marked_len, Trie *root);
 void free_trie(Trie *trie);
 
 #endif

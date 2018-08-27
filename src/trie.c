@@ -44,7 +44,7 @@ void append_trie(char *str, Trie *root)
     }
 }
 
-int match(const char *str, char *matched, Trie *root)
+static int match(const char *str, char *matched, Trie *root)
 {
     Trie *cur = root;
     size_t len = strlen(str);
@@ -57,7 +57,7 @@ int match(const char *str, char *matched, Trie *root)
             break;
         }
         cur = cur->next[offset];
-        if (cur->is_end) {
+        if (cur->is_end && MAX_TRIE_WORD_LEN > i + 1) {
             strncpy(matched, str, i + 1); // get the largest matched
         }
     }
@@ -65,25 +65,38 @@ int match(const char *str, char *matched, Trie *root)
     return strlen(matched) > 0 ? 1 : 0;
 }
 
-int match_all(const char *str, char *str_marked, Trie *root)
+int match_all(const char *str, char *str_marked, size_t marked_len, Trie *root)
 {
     size_t str_len = strlen(str), matched_len = 0;
     if (str_len <= 0) {
         return -1;
     }
+    if (str_len > marked_len - 1) {
+        return -1;
+    }
+    size_t count_len = 0; // in case of buffer overfolow
     char matched[MAX_TRIE_WORD_LEN] = {0};
     char *marked = str_marked;
     int i = 0;
     while (i < str_len) {
         if (match(str + i, matched, root) == 1) {
             matched_len = strlen(matched); 
-            //printf("matched:%s\n", matched);
+            count_len += MARK_TAG_OPEN_LEN + matched_len + MARK_TAG_CLOSE_LEN;
+            if (count_len > marked_len - 1) {
+                STR_COPY(str_marked, str, str_len)
+                break;
+            }
             COPY_AND_EXPAND(marked, MARK_TAG_OPEN, MARK_TAG_OPEN_LEN)
             COPY_AND_EXPAND(marked, str + i, matched_len)
             COPY_AND_EXPAND(marked, MARK_TAG_CLOSE, MARK_TAG_CLOSE_LEN)
             i += matched_len;
-            memset(matched, 0, sizeof(char) * MAX_TRIE_WORD_LEN);
+            memset(matched, 0, MAX_TRIE_WORD_LEN);
         } else {
+            count_len += 1;
+            if (count_len > marked_len - 1) {
+                STR_COPY(str_marked, str, str_len)
+                break;
+            }
             *marked++ = str[i++];
         }
     }
@@ -119,7 +132,7 @@ int main(void)
     char *target = "部队烧烤壮行晏abcdsjdjfjsdfoiajo";
 
     char marked[10240] = {0};
-    match_all(target, marked, root);
+    match_all(target, marked, 10240, root);
     printf("%s\n", marked);
     free_trie(root);
 

@@ -9,7 +9,7 @@
 
 //#define DEBUG
 
-Token *create_token(size_t off_start, size_t off_end, bool is_tag, const char *str) 
+static Token *create_token(size_t off_start, size_t off_end, bool is_tag, const char *str) 
 {
     size_t len, copylen;
     if (off_end < off_start) {
@@ -62,31 +62,52 @@ Token *token_get_all(const char *str)
     return root;
 }
 
-int token_mark_all(Token *root, char *dst, Trie *trie)
+int token_mark_all(const Token *root, char *dst, size_t dst_len, Trie *trie)
 {
     if (root == NULL) {
         return 1;
     } 
     Token *cur = root->next;
-    Token *tmp;
     char *target;
+    size_t target_len = 0;
     bool is_tag;
     char mark[MAX_TOKEN_LEN] = {0};
+    int8_t ret = 0;
     while (cur != NULL) {
         //printf("str: %s, is_tag : %d\n", cur->str, cur->is_tag);
         target = cur->str;
         is_tag = cur->is_tag;
-        if (!is_tag) {
-            match_all(target, mark, trie);
+        target_len = strlen(target);
+        if (!is_tag && target_len < MAX_TOKEN_LEN) {
+            ret = match_all(target, mark, MAX_TOKEN_LEN, trie);
+            if (ret < 0) {
+                return -1;
+            }
+            if (strlen(dst) + strlen(mark) >= dst_len) {
+                return -1;
+            }
             strcat(dst, mark);
             memset(mark, 0, MAX_TOKEN_LEN);
         } else {
+            if (strlen(dst) + target_len >= dst_len) {
+                return -1;
+            }
             strcat(dst, target);
         }
+        cur = cur->next;
+    }
+
+    return 0;
+}
+
+int token_free_all(Token *cur)
+{
+    Token *tmp;
+    while (cur != NULL) {
         tmp = cur->next;
         free(cur);
         cur = tmp;
-    } 
+    }
 
     return 0;
 }
